@@ -9,6 +9,8 @@
 
 #include "soc/rtc_cntl_reg.h"
 
+#include <SoftwareSerial.h>
+
 const char app_name[] = "esp32cam";
 const char ap_password[] = "esp32cam#";
 
@@ -25,6 +27,17 @@ auto instance_name = String(app_name) + "-" + get_mac_address();
 OV2640 cam;
 espcam_webserver espcam_web(cam, instance_name);
 
+// Define software serial pins
+const int RX_PIN = 14; 
+const int TX_PIN = 15; 
+
+// Initialize SoftwareSerial
+SoftwareSerial altSerial(RX_PIN, TX_PIN);
+
+// Define touch pins
+const int tMoTorgle = T0; //gpio 4
+
+
 // put your setup code here, to run once:
 void setup()
 {
@@ -34,6 +47,8 @@ void setup()
 	Serial.begin(115200);
 	Serial.setDebugOutput(true);
 	esp_log_level_set("*", ESP_LOG_VERBOSE);
+
+	altSerial.begin(115200);
 
 	log_i("CPU Freq = %d Mhz", getCpuFrequencyMhz());
 	log_i("Starting ESP32Cam...");
@@ -73,4 +88,16 @@ void setup()
 void loop()
 {
 	espcam_web.doLoop();
+
+	// Read the touch sensor value
+    int touchValue = touchRead(tMoTorgle);
+	Serial.print("Touch value: ");
+    Serial.println(touchValue);
+	if (touchValue < 30) {
+		altSerial.println("t");
+	}
+
+
+
+
 }
