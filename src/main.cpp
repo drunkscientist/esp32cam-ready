@@ -10,6 +10,9 @@
 #include "soc/rtc_cntl_reg.h"
 
 #include <SoftwareSerial.h>
+#include <PS4Controller.h>
+
+//#include <input_controls
 
 const char app_name[] = "esp32cam";
 const char ap_password[] = "esp32cam#";
@@ -27,15 +30,8 @@ auto instance_name = String(app_name) + "-" + get_mac_address();
 OV2640 cam;
 espcam_webserver espcam_web(cam, instance_name);
 
-// Define software serial pins
-const int RX_PIN = 14; 
-const int TX_PIN = 15; 
-
-// Initialize SoftwareSerial
-SoftwareSerial altSerial(RX_PIN, TX_PIN);
-
-// Define touch pins
-const int tMoTorgle = T0; //gpio 4
+#define RXD2 14
+#define TXD2 15
 
 
 // put your setup code here, to run once:
@@ -48,7 +44,7 @@ void setup()
 	Serial.setDebugOutput(true);
 	esp_log_level_set("*", ESP_LOG_VERBOSE);
 
-	altSerial.begin(115200);
+	Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
 
 	log_i("CPU Freq = %d Mhz", getCpuFrequencyMhz());
 	log_i("Starting ESP32Cam...");
@@ -83,19 +79,116 @@ void setup()
 	log_i("Starting servers...");
 
 	espcam_web.begin();
+
+
+//--NOTE: at the moment you will need the sixaxispair tool to either change your controllers mac address, or copy yours here
+	PS4.begin("a0:d7:95:6b:6b:cd");
+
+	//indicate successful setup
+	digitalWrite(LED_BUILTIN, true);
+	delay(250);
+	digitalWrite(LED_BUILTIN, false);
+	delay(250);
+	digitalWrite(LED_BUILTIN, true);
+	delay(250);
+	digitalWrite(LED_BUILTIN, false);
+}
+
+
+void moveControl(){
+	if(PS4.event.button_down.options){
+		Serial2.println("t");
+		Serial.println("options down, sending t to toggle motors");
+		delay(10);
+	}
+	
+	if(PS4.event.button_down.circle){
+		Serial2.println("3");
+		Serial.println("circle down, sending 3");
+	}
+	if(PS4.event.button_up.circle){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.cross){
+		Serial2.println("1");
+		Serial.println("cross down, sending 1");
+	}
+	if(PS4.event.button_up.cross){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.square){
+		Serial2.println("7");
+		Serial.println("square down, sending 7");
+	}
+	if(PS4.event.button_up.square){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.triangle){
+		Serial2.println("9");
+		Serial.println("triangle down, sending 9");
+	}
+	if(PS4.event.button_up.triangle){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.up){
+		Serial2.println("8");
+		Serial.println("up, sending 8");
+	}
+	if(PS4.event.button_up.up){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.down){
+		Serial2.println("2");
+		Serial.println("down, sending 2");
+	}
+	if(PS4.event.button_up.down){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.left){
+		Serial2.println("4");
+		Serial.println("left, sending 4");
+	}
+	if(PS4.event.button_up.left){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.right){
+		Serial2.println("6");
+		Serial.println("right, sending 6");
+	}
+	if(PS4.event.button_up.right){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.l1){
+		Serial2.println("s");
+		Serial.println("l1 down, sending s to spin");
+	}
+	if(PS4.event.button_up.l1){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
+	if(PS4.event.button_down.r1){
+		Serial2.println("5");
+		Serial.println("r1 down, sending 5 to spin");
+	}
+	if(PS4.event.button_up.r1){
+		Serial2.println("0");
+		Serial.println("stopping");
+	}
 }
 
 void loop()
 {
 	espcam_web.doLoop();
 
-	// Read the touch sensor value
-    int touchValue = touchRead(tMoTorgle);
-	Serial.print("Touch value: ");
-    Serial.println(touchValue);
-	if (touchValue < 30) {
-		altSerial.println("t");
-	}
+	moveControl();
 
 
 
